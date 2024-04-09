@@ -47,6 +47,19 @@ body, html {
   border-radius: 5px;
   cursor: pointer;
 }
+#switch-camera {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
 #captured-image {
   position: fixed;
   top: 0;
@@ -65,37 +78,47 @@ body, html {
   <img id="captured-image" src="">
 </div>
 <button id="capture">撮影</button>
+<button id="switch-camera">カメラ切替</button>
 <script>
 const video = document.getElementById('camera-stream');
 const canvas = document.getElementById('canvas');
 const context = canvas.getContext('2d');
 const captureButton = document.getElementById('capture');
+const switchCameraButton = document.getElementById('switch-camera');
 const capturedImage = document.getElementById('captured-image');
 const frameImage = new Image();
 frameImage.src = 'ninket.png'; // フォトフレームの画像パス
 
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-  .then(function(stream) {
-    video.srcObject = stream;
-    video.onloadedmetadata = function() {
-      const aspectRatio = video.videoWidth / video.videoHeight;
-      const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
-      
-      if (aspectRatio > containerWidth / containerHeight) {
-        canvas.width = containerHeight * aspectRatio;
-        canvas.height = containerHeight;
-      } else {
-        canvas.width = containerWidth;
-        canvas.height = containerWidth / aspectRatio;
-      }
-      
-      drawFrame();
-    };
-  })
-  .catch(function(error) {
-    console.error("カメラへのアクセスに失敗しました：", error);
-  });
+let currentStream;
+let cameraFacing = 'environment';
+
+function startCamera() {
+  if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+  }
+
+  const constraints = {
+    video: {
+      facingMode: cameraFacing,
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    }
+  };
+
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(stream) {
+      currentStream = stream;
+      video.srcObject = stream;
+      video.onloadedmetadata = function() {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        drawFrame();
+      };
+    })
+    .catch(function(error) {
+      console.error("カメラへのアクセスに失敗しました：", error);
+    });
+}
 
 function drawFrame() {
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -126,7 +149,19 @@ captureButton.addEventListener('click', function() {
   video.style.display = 'none';
   canvas.style.display = 'none';
   captureButton.style.display = 'none';
+  switchCameraButton.style.display = 'none';
 });
+
+switchCameraButton.addEventListener('click', function() {
+  if (cameraFacing === 'environment') {
+    cameraFacing = 'user';
+  } else {
+    cameraFacing = 'environment';
+  }
+  startCamera();
+});
+
+startCamera();
 </script>
 </body>
 </html>
