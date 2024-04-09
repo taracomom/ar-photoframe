@@ -17,14 +17,13 @@ body, html {
   position: relative;
   width: 100%;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
-video, canvas {
-  object-fit: cover;
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 #capture {
   position: fixed;
@@ -44,12 +43,10 @@ video, canvas {
 </head>
 <body>
 <div id="container">
-  <video id="camera-stream" autoplay playsinline></video>
-  <canvas id="canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+  <canvas id="canvas"></canvas>
 </div>
 <button id="capture">撮影</button>
 <script>
-const video = document.getElementById('camera-stream');
 const canvas = document.getElementById('canvas');
 const context = canvas.getContext('2d');
 const captureButton = document.getElementById('capture');
@@ -58,29 +55,34 @@ frameImage.src = 'ninket.png'; // フォトフレームの画像パス
 
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(function(stream) {
+    const video = document.createElement('video');
     video.srcObject = stream;
+    video.autoplay = true;
+    video.playsinline = true;
     video.onloadedmetadata = function() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      drawFrame();
+      drawFrame(video);
     };
   })
   .catch(function(error) {
     console.error("カメラへのアクセスに失敗しました：", error);
   });
 
-function drawFrame() {
+function drawFrame(video) {
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-  requestAnimationFrame(drawFrame);
+  requestAnimationFrame(() => drawFrame(video));
 }
 
 captureButton.addEventListener('click', function() {
-  const dataURL = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.href = dataURL;
-  link.download = 'captured-photo.png';
-  link.click();
+  canvas.toBlob(function(blob) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'captured-photo.png';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }, 'image/png');
 });
 </script>
 </body>
