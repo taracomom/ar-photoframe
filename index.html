@@ -1,14 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>マーカーレスARフォトフレーム</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <title>撮影時のフォトフレームオーバーレイ</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas, video {
+            display: none; /* 最初は非表示 */
+        }
+        #capture {
+            z-index: 2;
+            position: fixed;
+            top: 20px;
+        }
+    </style>
 </head>
-<body style="margin : 0px; overflow: hidden;">
-    <a-scene embedded arjs='sourceType: webcam;'>
-        <!-- カメラビューに直接画像を表示 -->
-        <a-image src="ninket.png" position="0 0 -5" rotation="0 0 0" scale="3 3 3"></a-image>
-        <a-entity camera></a-entity>
-    </a-scene>
+<body>
+
+<video id="camera-stream" autoplay></video>
+<canvas id="canvas"></canvas>
+<button id="capture">撮影</button>
+
+<script>
+    const video = document.getElementById('camera-stream');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const captureButton = document.getElementById('capture');
+    
+    // フォトフレーム画像を読み込む
+    const frameImage = new Image();
+    frameImage.src = 'ninket.png'; // ここにフォトフレームのパスを指定
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            video.srcObject = stream;
+            video.play();
+            video.onplay = function() {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            };
+        })
+        .catch(function(error) {
+            console.log("カメラへのアクセスに失敗しました：", error);
+        });
+
+    captureButton.addEventListener('click', function() {
+        // videoの映像をcanvasに描画
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // フォトフレーム画像をcanvasに描画
+        context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+        
+        // canvasの内容を画像としてダウンロード
+        canvas.toBlob(function(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'captured-photo.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 'image/png');
+    });
+</script>
 </body>
 </html>
