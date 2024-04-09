@@ -24,8 +24,8 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 2;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 30px 40px;
+            font-size: 30px;
             color: white;
             background-color: #007bff;
             border: none;
@@ -65,6 +65,12 @@
             context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
             const dataURL = canvas.toDataURL('image/png');
             downloadImage(dataURL, 'captured-photo.png');
+            canvas.toBlob(function(blob) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'captured-photo.png';
+        link.click();
+    }, 'image/png');
         };
         if (!frameImage.complete) {
             frameImage.src = frameImage.src;
