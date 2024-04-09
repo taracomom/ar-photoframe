@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>カメラ撮影とフォトフレームオーバーレイ</title>
+    <title>カメラ撮影とフォトフレームオーバーレイ2</title>
     <style>
         body, html {
             margin: 0;
@@ -47,7 +47,7 @@
     const captureButton = document.getElementById('capture');
 
     const frameImage = new Image();
-   // frameImage.src = 'ninket.png'; // フォトフレームの画像パス
+    frameImage.src = 'ninket.png'; // フォトフレームの画像パス
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
     .then(function(stream) {
