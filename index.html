@@ -23,8 +23,8 @@
         }
         video, canvas {
             object-fit: cover;
-            width: calc(100vh * 9 / 16);
-            height: 100vh;
+            width: 100%;
+            height: auto;
         }
         #capture {
             position: fixed;
@@ -48,7 +48,7 @@
     <video id="camera-stream" autoplay playsinline></video>
     <canvas id="canvas" style="display: none;"></canvas>
 </div>
-<button id="capture">撮あ影</button>
+<button id="capture">撮影</button>
 
 <script>
     const video = document.getElementById('camera-stream');
@@ -68,29 +68,27 @@
     });
 
     video.addEventListener('loadedmetadata', function() {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        drawOverlay();
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        const width = window.innerHeight * aspectRatio;
+        video.style.width = width + "px";
+        video.style.height = "100%";
     });
 
-    function drawOverlay() {
-        context.drawImage(video, (canvas.width - video.videoWidth) / 2, 0, video.videoWidth, video.videoHeight);
-        if (!frameImage.complete) {
-            frameImage.onload = function() {
-                context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-            };
-        } else {
-            context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-        }
-        requestAnimationFrame(drawOverlay);
-    }
-
     captureButton.addEventListener('click', function() {
-        const dataURL = canvas.toDataURL('image/png').replace("image/png", "image/octet-stream");
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = 'captured-photo.png';
-        link.click();
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frameImage.onload = function() {
+            context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/png').replace("image/png", "image/octet-stream");
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = 'captured-photo.png';
+            link.click();
+        };
+        if (!frameImage.complete) {
+            frameImage.src = frameImage.src;
+        }
     });
 </script>
 </body>
