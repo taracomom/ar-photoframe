@@ -99,9 +99,7 @@ function startCamera() {
 
   const constraints = {
     video: {
-      facingMode: cameraFacing,
-      width: { ideal: 1280 },
-      height: { ideal: 720 }
+      facingMode: cameraFacing
     }
   };
 
@@ -110,8 +108,20 @@ function startCamera() {
       currentStream = stream;
       video.srcObject = stream;
       video.onloadedmetadata = function() {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        const containerWidth = container.offsetWidth;
+        const containerHeight = container.offsetHeight;
+
+        if (aspectRatio > containerWidth / containerHeight) {
+          video.style.width = containerWidth + 'px';
+          video.style.height = 'auto';
+        } else {
+          video.style.width = 'auto';
+          video.style.height = containerHeight + 'px';
+        }
+
+        canvas.width = video.offsetWidth;
+        canvas.height = video.offsetHeight;
         drawFrame();
       };
     })
