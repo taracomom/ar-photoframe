@@ -1,30 +1,118 @@
-<!DOCTYPE html> <html> <head> <title>カメラ撮影とフォトフレームオーバーレイ</title> <style> body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; display: flex; justify-content: center; align-items: center; background-color: #000; } #container { position: relative; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; } #camera-stream { width: 100%; height: 100%; object-fit: cover; } #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; } #capture { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 2; padding: 20px 40px; font-size: 20px; color: white; background-color: #007bff; border: none; border-radius: 5px; cursor: pointer; } #captured-image { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; display: none; } </style> </head> <body> <div id="container"> <video id="camera-stream" autoplay playsinline></video> <canvas id="canvas"></canvas> <img id="captured-image" src=""> </div> <button id="capture">撮影</button> <script> const video = document.getElementById('camera-stream'); const canvas = document.getElementById('canvas'); const context = canvas.getContext('2d'); const captureButton = document.getElementById('capture'); const capturedImage = document.getElementById('captured-image'); const frameImage = new Image(); frameImage.src = 'ninket.png'; // フォトフレームの画像パス
+<!DOCTYPE html>
+<html>
+<head>
+<title>カメラ撮影とフォトフレームオーバーレイ</title>
+<style>
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000;
+}
+#container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#camera-stream {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+#capture {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 20px 40px;
+  font-size: 20px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+#captured-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+}
+</style>
+</head>
+<body>
+<div id="container">
+  <video id="camera-stream" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+  <img id="captured-image" src="">
+</div>
+<button id="capture">撮影</button>
+<script>
+const video = document.getElementById('camera-stream');
+const canvas = document.getElementById('canvas');
+const context = canvas.getContext('2d');
+const captureButton = document.getElementById('capture');
+const capturedImage = document.getElementById('captured-image');
+const frameImage = new Image();
+frameImage.src = 'ninket.png'; // フォトフレームの画像パス
+
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-.then(function(stream) {
-video.srcObject = stream;
-video.onloadedmetadata = function() {
-canvas.width = video.videoWidth;
-canvas.height = video.videoHeight;
-drawFrame();
-};
-})
-.catch(function(error) {
-console.error("カメラへのアクセスに失敗しました：", error);
-});
+  .then(function(stream) {
+    video.srcObject = stream;
+    video.onloadedmetadata = function() {
+      const aspectRatio = video.videoWidth / video.videoHeight;
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      const containerAspectRatio = containerWidth / containerHeight;
+
+      if (aspectRatio > containerAspectRatio) {
+        video.style.width = '100%';
+        video.style.height = 'auto';
+      } else {
+        video.style.width = 'auto';
+        video.style.height = '100%';
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      drawFrame();
+    };
+  })
+  .catch(function(error) {
+    console.error("カメラへのアクセスに失敗しました：", error);
+  });
 
 function drawFrame() {
-context.drawImage(video, 0, 0, canvas.width, canvas.height);
-context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-requestAnimationFrame(drawFrame);
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+  requestAnimationFrame(drawFrame);
 }
 
 captureButton.addEventListener('click', function() {
-capturedImage.src = canvas.toDataURL('image/png');
-capturedImage.style.display = 'block';
-video.style.display = 'none';
-canvas.style.display = 'none';
-captureButton.style.display = 'none';
+  capturedImage.src = canvas.toDataURL('image/png');
+  capturedImage.style.display = 'block';
+  video.style.display = 'none';
+  canvas.style.display = 'none';
+  captureButton.style.display = 'none';
 });
 </script>
-
-</body> </html>
+</body>
+</html>
