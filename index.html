@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>カメラ撮影とフォトフレームオーバーレイ2</title>
+    <title>カメラ撮影とフォトフレームオーバーレイ３</title>
     <style>
         body, html {
             margin: 0;
@@ -61,29 +61,23 @@
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        frameImage.onload = function() {
-            context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/png');
-            downloadImage(dataURL, 'captured-photo.png');
-            canvas.toBlob(function(blob) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'captured-photo.png';
-        link.click();
-    }, 'image/png');
-        };
         if (!frameImage.complete) {
-            frameImage.src = frameImage.src;
+            frameImage.onload = function() {
+                context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+                saveImage();
+            };
+        } else {
+            context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+            saveImage();
         }
     });
 
-    function downloadImage(dataURL, filename) {
-        const a = document.createElement('a');
-        a.href = dataURL;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    function saveImage() {
+        const dataURL = canvas.toDataURL('image/png').replace("image/png", "image/octet-stream");
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'captured-photo.png';
+        link.click();
     }
 </script>
 </body>
