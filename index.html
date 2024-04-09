@@ -1,72 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>撮影時のフォトフレームオーバーレイ</title>
+    <title>カメラ撮影とフォトフレームオーバーレイ</title>
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            background-color: #000;
         }
-        canvas, video {
-            display: none; /* 最初は非表示 */
+        video, canvas {
+            object-fit: cover;
+            max-width: 100%;
+            max-height: 100vh;
         }
         #capture {
-            z-index: 2;
             position: fixed;
-            top: 20px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<video id="camera-stream" autoplay></video>
-<canvas id="canvas"></canvas>
+<video id="camera-stream" autoplay playsinline></video>
 <button id="capture">撮影</button>
+<canvas id="canvas"></canvas>
 
 <script>
     const video = document.getElementById('camera-stream');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const captureButton = document.getElementById('capture');
-    
-    // フォトフレーム画像を読み込む
-    const frameImage = new Image();
-    frameImage.src = 'ninket.png'; // ここにフォトフレームのパスを指定
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-            video.srcObject = stream;
-            video.play();
-            video.onplay = function() {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-            };
-        })
-        .catch(function(error) {
-            console.log("カメラへのアクセスに失敗しました：", error);
-        });
+    const frameImage = new Image();
+   // frameImage.src = 'ninket.png'; // フォトフレームの画像パス
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(function(stream) {
+        video.srcObject = stream;
+    })
+    .catch(function(error) {
+        console.error("カメラへのアクセスに失敗しました：", error);
+    });
 
     captureButton.addEventListener('click', function() {
-        // videoの映像をcanvasに描画
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // フォトフレーム画像をcanvasに描画
-        context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-        
-        // canvasの内容を画像としてダウンロード
-        canvas.toBlob(function(blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'captured-photo.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 'image/png');
+        frameImage.onload = function() {
+            context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/png');
+            downloadImage(dataURL, 'captured-photo.png');
+        };
+        if (!frameImage.complete) {
+            frameImage.src = frameImage.src;
+        }
     });
+
+    function downloadImage(dataURL, filename) {
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 </script>
 </body>
 </html>
