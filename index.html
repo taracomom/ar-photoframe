@@ -14,22 +14,31 @@
             background-color: #000;
         }
         video, canvas {
-            object-fit: cover; /* ここでビデオとキャンバスのサイズ調整を行う */
-            height: 100vh;
-            width: auto;
+            object-fit: cover;
+            max-width: 100%;
+            max-height: 100vh;
         }
         #capture {
             position: fixed;
             bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 2;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<video id="camera-stream" playsinline></video>
+<video id="camera-stream" autoplay playsinline></video>
 <button id="capture">撮影</button>
-<canvas id="canvas" style="display:none;"></canvas>
+<canvas id="canvas"></canvas>
 
 <script>
     const video = document.getElementById('camera-stream');
@@ -37,57 +46,39 @@
     const context = canvas.getContext('2d');
     const captureButton = document.getElementById('capture');
 
-    // フォトフレーム画像を読み込む
-const frameImage = new Image();
-frameImage.onload = function() {
-    // フォトフレーム画像が読み込まれた後、撮影ボタンをクリックすると、
-    // ビデオの映像とフォトフレームがcanvasに描画される
-    captureButton.addEventListener('click', function() {
-        const height = video.videoHeight;
-        const width = height * (9 / 16); // 9:16のアスペクト比に合わせる
-        canvas.width = width;
-        canvas.height = height;
+    const frameImage = new Image();
+    frameImage.src = 'ninket.png'; // フォトフレームの画像パス
 
-        // videoの映像をcanvasに描画
-        context.drawImage(video, (video.videoWidth - width) / 2, 0, width, height, 0, 0, width, height);
-        
-        // フォトフレーム画像をcanvasに描画
-        context.drawImage(frameImage, 0, 0, width, height);
-
-        // 撮影された画像を表示（デバッグ用）
-        video.style.display = 'none';
-        canvas.style.display = 'block';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(function(stream) {
+        video.srcObject = stream;
+    })
+    .catch(function(error) {
+        console.error("カメラへのアクセスに失敗しました：", error);
     });
-};
-
-// フォトフレーム画像のURLを指定（アップロードした画像のパスに書き換えてください）
-frameImage.src = 'ninket.png';
-
-
-    // リアカメラを優先して起動
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", aspectRatio: 9/16 } })
-        .then(function(stream) {
-            video.srcObject = stream;
-            video.play();
-        })
-        .catch(function(error) {
-            console.log("カメラへのアクセスに失敗しました：", error);
-        });
 
     captureButton.addEventListener('click', function() {
-        // canvasのサイズをビデオのアスペクト比に合わせて調整
-        const height = video.videoHeight;
-        const width = height * (9 / 16); // 9:16のアスペクト比
-        canvas.width = width;
-        canvas.height = height;
-        context.drawImage(video, (video.videoWidth - width) / 2, 0, width, height, 0, 0, width, height);
-
-        // ここでフォトフレームの画像を追加する処理も可能
-
-        // 撮影された画像を表示（デバッグ用）
-        video.style.display = 'none';
-        canvas.style.display = 'block';
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frameImage.onload = function() {
+            context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/png');
+            downloadImage(dataURL, 'captured-photo.png');
+        };
+        if (!frameImage.complete) {
+            frameImage.src = frameImage.src;
+        }
     });
+
+    function downloadImage(dataURL, filename) {
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 </script>
 </body>
 </html>
