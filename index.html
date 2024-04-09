@@ -24,7 +24,7 @@ body, html {
 #camera-stream {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 #canvas {
   position: absolute;
@@ -78,19 +78,6 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(function(stream) {
     video.srcObject = stream;
     video.onloadedmetadata = function() {
-      const aspectRatio = video.videoWidth / video.videoHeight;
-      const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
-      const containerAspectRatio = containerWidth / containerHeight;
-
-      if (aspectRatio > containerAspectRatio) {
-        video.style.width = '100%';
-        video.style.height = 'auto';
-      } else {
-        video.style.width = 'auto';
-        video.style.height = '100%';
-      }
-
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       drawFrame();
@@ -102,16 +89,28 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
 
 function drawFrame() {
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+  
+  const frameWidth = canvas.width;
+  const frameHeight = frameWidth * (frameImage.height / frameImage.width);
+  const frameX = 0;
+  const frameY = (canvas.height - frameHeight) / 2;
+  
+  context.drawImage(frameImage, frameX, frameY, frameWidth, frameHeight);
   requestAnimationFrame(drawFrame);
 }
 
 captureButton.addEventListener('click', function() {
-  capturedImage.src = canvas.toDataURL('image/png');
+  const dataURL = canvas.toDataURL('image/png');
+  capturedImage.src = dataURL;
   capturedImage.style.display = 'block';
   video.style.display = 'none';
   canvas.style.display = 'none';
   captureButton.style.display = 'none';
+  
+  const link = document.createElement('a');
+  link.href = dataURL;
+  link.download = 'captured-photo.png';
+  link.click();
 });
 </script>
 </body>
