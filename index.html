@@ -78,8 +78,18 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(function(stream) {
     video.srcObject = stream;
     video.onloadedmetadata = function() {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      const aspectRatio = video.videoWidth / video.videoHeight;
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      
+      if (aspectRatio > containerWidth / containerHeight) {
+        canvas.width = containerHeight * aspectRatio;
+        canvas.height = containerHeight;
+      } else {
+        canvas.width = containerWidth;
+        canvas.height = containerWidth / aspectRatio;
+      }
+      
       drawFrame();
     };
   })
@@ -90,10 +100,20 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
 function drawFrame() {
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   
-  const frameWidth = canvas.width;
-  const frameHeight = frameWidth * (frameImage.height / frameImage.width);
-  const frameX = 0;
-  const frameY = (canvas.height - frameHeight) / 2;
+  const frameAspectRatio = frameImage.width / frameImage.height;
+  let frameWidth, frameHeight, frameX, frameY;
+  
+  if (canvas.width / canvas.height > frameAspectRatio) {
+    frameHeight = canvas.height;
+    frameWidth = frameHeight * frameAspectRatio;
+    frameX = (canvas.width - frameWidth) / 2;
+    frameY = 0;
+  } else {
+    frameWidth = canvas.width;
+    frameHeight = frameWidth / frameAspectRatio;
+    frameX = 0;
+    frameY = (canvas.height - frameHeight) / 2;
+  }
   
   context.drawImage(frameImage, frameX, frameY, frameWidth, frameHeight);
   requestAnimationFrame(drawFrame);
@@ -106,11 +126,6 @@ captureButton.addEventListener('click', function() {
   video.style.display = 'none';
   canvas.style.display = 'none';
   captureButton.style.display = 'none';
-  
-  const link = document.createElement('a');
-  link.href = dataURL;
-  link.download = 'captured-photo.png';
-  link.click();
 });
 </script>
 </body>
